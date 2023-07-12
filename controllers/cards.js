@@ -26,6 +26,9 @@ const deleteCard = (req, res) => {
     .orFail()
     .then((card) => res.status(200).send(card))
     .catch((err) => {
+      if (err instanceof CastError) {
+        return res.status(400).send({ message: 'Передан некорректный id при удалении карточки!' });
+      }
       if (err instanceof DocumentNotFoundError) {
         return res.status(404).send({ message: 'Карточка с указанным id не найдена!' });
       }
