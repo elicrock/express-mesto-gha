@@ -18,7 +18,7 @@ const getUserById = (req, res) => {
         return res.status(400).send({ error: 'Переданы некорректные данные!' });
       }
       if (err instanceof DocumentNotFoundError) {
-        return res.status(404).send({ message: 'Пользователь с указанным id не найден!' });
+        return res.status(404).send({ message: 'Пользователь по указанному id не найден!' });
       }
       return res.status(500).send({ message: 'Ошибка сервера!' });
     });
