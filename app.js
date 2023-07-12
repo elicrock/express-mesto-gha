@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
+const router = require('./routes');
+
 const { PORT = 3000 } = process.env;
 
 const app = express();
@@ -18,8 +20,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/', require('./routes/users'));
-// app.use('/', require('./routes/cards'));
+app.use(router);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
