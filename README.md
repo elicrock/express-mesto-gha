@@ -26,9 +26,9 @@
 
 ## Запуск проекта
 
-`npm run start` — запускает сервер
-`npm run dev` — запускает сервер с hot-reload
+* `npm run start` — запускает сервер
+* `npm run dev` — запускает сервер с hot-reload
 
 ---
 ## Ссылки проекта:
-* [Проект на GitHub](https://github.com/elicrock/express-mesto-gha) - https://github.com/elicrock/express-mesto-gha
+* Проект на GitHub - https://github.com/elicrock/express-mesto-gha
