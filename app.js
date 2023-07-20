@@ -1,14 +1,15 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const helmet = require('helmet');
 const limiter = require('./middlewares/rateLimit');
-const { login, createUser } = require('./controllers/users');
 
 const router = require('./routes');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
+app.use(cors());
 app.use(helmet());
 app.use(limiter);
 app.use(express.json());
@@ -24,9 +25,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-app.post('/signin', login);
-app.post('/signup', createUser);
 
 app.use(router);
 
