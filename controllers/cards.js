@@ -1,5 +1,7 @@
 const { DocumentNotFoundError, ValidationError, CastError } = require('mongoose').Error;
-const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../utils/constants');
+const {
+  BAD_REQUEST, FORBIDDEN, NOT_FOUND, INTERNAL_SERVER_ERROR,
+} = require('../utils/constants');
 const Card = require('../models/card');
 
 const getCards = (req, res) => {
@@ -21,9 +23,16 @@ const createCard = (req, res) => {
 };
 
 const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  const { cardId } = req.params;
+
+  Card.findById(cardId)
     .orFail()
-    .then((card) => res.send(card))
+    .then((card) => {
+      if (card.owner.toString() !== req.user._id) {
+        return res.status(FORBIDDEN).send({ message: 'Отказано в удалении карточки!' });
+      }
+      return Card.findByIdAndDelete(cardId).then(() => res.send(card));
+    })
     .catch((err) => {
       if (err instanceof CastError) {
         return res.status(BAD_REQUEST).send({ message: 'Передан некорректный id при удалении карточки!' });

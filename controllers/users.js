@@ -1,7 +1,10 @@
+const { PROD, JWT_SECRET } = process.env;
 const { DocumentNotFoundError, ValidationError, CastError } = require('mongoose').Error;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../utils/constants');
+const {
+  BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, INTERNAL_SERVER_ERROR,
+} = require('../utils/constants');
 const User = require('../models/user');
 
 const getUsers = (req, res) => {
@@ -25,6 +28,21 @@ const getUserById = (req, res) => {
     });
 };
 
+const getCurrentUser = (req, res) => {
+  User.findById(req.user._id)
+    .orFail()
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err instanceof CastError) {
+        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные!' });
+      }
+      if (err instanceof DocumentNotFoundError) {
+        return res.status(NOT_FOUND).send({ message: 'Пользователь по указанному id не найден!' });
+      }
+      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера!' });
+    });
+};
+
 const createUser = (req, res) => {
   const {
     name, about, avatar, email, password,
@@ -33,8 +51,17 @@ const createUser = (req, res) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => res.status(201).send(user))
+    .then((user) => res.status(201).send({
+      _id: user._id,
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+    }))
     .catch((err) => {
+      if (err.code === 11000) {
+        return res.status(409).send({ message: `Пользователь с таким email ${email} уже зарегистрирован!` });
+      }
       if (err instanceof ValidationError) {
         return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя!' });
       }
@@ -78,18 +105,23 @@ const login = (req, res) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
-      res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      const token = jwt.sign(
+        { _id: user._id },
+        PROD === 'production' ? JWT_SECRET : 'dev-secret',
+        { expiresIn: '7d' },
+      );
+      res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: true });
       res.send(token);
     })
     .catch((err) => {
-      res.status(401).send({ message: err.message });
+      res.status(UNAUTHORIZED).send({ message: err.message });
     });
 };
 
 module.exports = {
   getUsers,
   getUserById,
+  getCurrentUser,
   createUser,
   updateUserInfo,
   updateUserAvatar,
