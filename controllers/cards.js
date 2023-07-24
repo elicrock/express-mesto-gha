@@ -1,84 +1,76 @@
-const { DocumentNotFoundError, ValidationError, CastError } = require('mongoose').Error;
-const {
-  BAD_REQUEST, FORBIDDEN, NOT_FOUND, INTERNAL_SERVER_ERROR,
-} = require('../utils/constants');
+const { ValidationError, CastError } = require('mongoose').Error;
 const Card = require('../models/card');
+const { CREATED_STATUS } = require('../utils/constants');
+const NotFoundError = require('../errors/NotFoundError');
+const BadRequestError = require('../errors/BadRequestError');
+const ForbiddenError = require('../errors/ForbiddenError');
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .then((users) => res.send(users))
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера!' }));
+    .catch(next);
 };
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.status(201).send(card))
+    .then((card) => res.status(CREATED_STATUS).send(card))
     .catch((err) => {
       if (err instanceof ValidationError) {
-        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки!' });
+        return next(new BadRequestError('Переданы некорректные данные при создании карточки!'));
       }
-      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера!' });
+      return next(err);
     });
 };
 
-const deleteCard = (req, res) => {
+const deleteCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findById(cardId)
-    .orFail()
+    .orFail(new NotFoundError('Карточка с указанным id не найдена!'))
     .then((card) => {
       if (card.owner.toString() !== req.user._id) {
-        return res.status(FORBIDDEN).send({ message: 'Отказано в удалении карточки!' });
+        return next(new ForbiddenError('Отказано в удалении карточки!'));
       }
       return Card.findByIdAndDelete(cardId).then(() => res.send(card));
     })
     .catch((err) => {
       if (err instanceof CastError) {
-        return res.status(BAD_REQUEST).send({ message: 'Передан некорректный id при удалении карточки!' });
+        return next(new BadRequestError('Передан некорректный id при удалении карточки!'));
       }
-      if (err instanceof DocumentNotFoundError) {
-        return res.status(NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' });
-      }
-      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера!' });
+      return next(err);
     });
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .orFail()
+    .orFail(new NotFoundError('Передан несуществующий id карточки!'))
     .then((card) => res.send(card))
     .catch((err) => {
       if (err instanceof CastError) {
-        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки лайка!' });
+        return next(new BadRequestError('Переданы некорректные данные для постановки лайка!'));
       }
-      if (err instanceof DocumentNotFoundError) {
-        return res.status(NOT_FOUND).send({ message: 'Передан несуществующий id карточки!' });
-      }
-      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера!' });
+      return next(err);
     });
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .orFail()
+    .orFail(new NotFoundError('Передан несуществующий id карточки!'))
     .then((card) => res.send(card))
     .catch((err) => {
       if (err instanceof CastError) {
-        return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для снятия лайка!' });
+        return next(new BadRequestError('Переданы некорректные данные для снятия лайка!'));
       }
-      if (err instanceof DocumentNotFoundError) {
-        return res.status(NOT_FOUND).send({ message: 'Передан несуществующий id карточки!' });
-      }
-      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'Ошибка сервера!' });
+      return next(err);
     });
 };
 
