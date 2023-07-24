@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const {
   BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, INTERNAL_SERVER_ERROR,
 } = require('../utils/constants');
+const NotFoundError = require('../errors/not-found-err');
 const User = require('../models/user');
 
 const getUsers = (req, res) => {

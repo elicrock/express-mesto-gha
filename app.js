@@ -5,7 +5,7 @@ const cookies = require('cookie-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const limiter = require('./middlewares/rateLimit');
-
+const errorHandler = require('./middlewares/errorHandler');
 const router = require('./routes');
 
 const { PORT = 3000 } = process.env;
@@ -22,6 +22,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 });
 
 app.use(router);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
