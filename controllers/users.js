@@ -30,12 +30,7 @@ const getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
     .orFail(new NotFoundError('Пользователь по указанному id не найден!'))
     .then((user) => res.send(user))
-    .catch((err) => {
-      if (err instanceof CastError) {
-        return next(new BadRequestError('Переданы некорректные данные!'));
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
 const createUser = (req, res, next) => {
@@ -100,7 +95,6 @@ const login = (req, res, next) => {
         { expiresIn: '7d' },
       );
       res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: true });
-      res.send({ token });
     })
     .catch(next);
 };
