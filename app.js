@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const { errors } = require('celebrate');
 const cookies = require('cookie-parser');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -22,6 +23,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 });
 
 app.use(router);
+app.use(errors());
 app.use(errorHandler);
 
 app.listen(PORT, () => {
