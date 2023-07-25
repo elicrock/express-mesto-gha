@@ -95,6 +95,7 @@ const login = (req, res, next) => {
         { expiresIn: '7d' },
       );
       res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: true });
+      res.send({ message: 'Авторизация прошла успешно!' });
     })
     .catch(next);
 };
