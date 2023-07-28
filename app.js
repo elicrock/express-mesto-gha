@@ -8,8 +8,7 @@ const helmet = require('helmet');
 const limiter = require('./middlewares/rateLimit');
 const errorHandler = require('./middlewares/errorHandler');
 const router = require('./routes');
-
-const { PORT = 3000 } = process.env;
+const { PORT, MONGODB_URI, mongooseOptions } = require('./utils/config');
 
 const app = express();
 app.use(cors());
@@ -18,9 +17,7 @@ app.use(limiter);
 app.use(cookies());
 app.use(express.json());
 
-mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
-  useNewUrlParser: true,
-});
+mongoose.connect(MONGODB_URI, mongooseOptions);
 
 app.use(router);
 app.use(errors());

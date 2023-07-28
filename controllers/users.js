@@ -1,7 +1,7 @@
-const { PROD, JWT_SECRET } = process.env;
 const { ValidationError, CastError } = require('mongoose').Error;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../utils/config');
 const User = require('../models/user');
 const { CREATED_STATUS } = require('../utils/constants');
 const NotFoundError = require('../errors/NotFoundError');
@@ -89,11 +89,7 @@ const login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign(
-        { _id: user._id },
-        PROD === 'production' ? JWT_SECRET : 'dev-secret',
-        { expiresIn: '7d' },
-      );
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
       res.cookie('jwt', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: true });
       res.send({ message: 'Авторизация прошла успешно!' });
     })
